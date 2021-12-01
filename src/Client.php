@@ -3,6 +3,7 @@
 namespace Exmo\WebSocketApi;
 
 use Closure;
+use Ratchet\Client\WebSocket;
 
 class Client
 {
@@ -13,58 +14,32 @@ class Client
     const EVENT_SUBSCRIBED = 'subscribed';
     const EVENT_UNSUBSCRIBED = 'unsubscribed';
 
-    /**
-     * @var \Ratchet\Client\WebSocket
-     */
-    protected $connect;
+    protected WebSocket $connect;
+    protected int $messageId = 0;
+    protected string $sessionId;
 
-    /**
-     * @var int
-     */
-    protected $messageId = 0;
-
-    /**
-     * @var string
-     */
-    protected $sessionId;
-
-    /**
-     * ExmoWsApi constructor.
-     * @param \Ratchet\Client\WebSocket $connect
-     */
-    public function __construct(\Ratchet\Client\WebSocket $connect)
+    public function __construct(WebSocket $connect)
     {
         $this->connect = $connect;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getSessionId()
+    public function getSessionId(): ?string
     {
         return $this->sessionId;
     }
 
-    /**
-     * @param string $apiKey
-     * @param string $apiSecret
-     * @param null   $nonce
-     */
-    public function login($apiKey, $apiSecret, $nonce = null)
+    public function login(string $apiKey, string $apiSecret, ?int $nonce = null): void
     {
         $nonce = $nonce ?: time();
         $this->send([
-            'method'  => 'login',
+            'method' => 'login',
             'api_key' => $apiKey,
-            'nonce'   => $nonce,
-            'sign'    => $this->getSign($apiKey, $apiSecret, $nonce),
+            'nonce' => $nonce,
+            'sign' => $this->getSign($apiKey, $apiSecret, $nonce),
         ]);
     }
 
-    /**
-     * @param array $topics
-     */
-    public function subscribe(array $topics)
+    public function subscribe(array $topics): void
     {
         $this->send([
             'method' => 'subscribe',
@@ -72,11 +47,7 @@ class Client
         ]);
     }
 
-
-    /**
-     * @param array $topics
-     */
-    public function unsubscribe(array $topics)
+    public function unsubscribe(array $topics): void
     {
         $this->send([
             'method' => 'unsubscribe',
@@ -84,10 +55,7 @@ class Client
         ]);
     }
 
-    /**
-     * @param array $data
-     */
-    public function send(array $data)
+    public function send(array $data): void
     {
         $this->connect->send(json_encode(
             [
@@ -96,10 +64,7 @@ class Client
         ));
     }
 
-    /**
-     * @param Closure $receiveCallback
-     */
-    public function onMessage(\Closure $receiveCallback)
+    public function onMessage(Closure $receiveCallback): void
     {
         $this->connect->on('message', function ($msg) use ($receiveCallback) {
             $receivedData = json_decode($msg, true);
@@ -110,14 +75,8 @@ class Client
         });
     }
 
-    /**
-     * @param string $apiKey
-     * @param string $apiSecret
-     * @param int    $nonce
-     * @return string
-     */
-    protected function getSign($apiKey, $apiSecret, $nonce)
+    protected function getSign(string $apiKey, string $apiSecret, int $nonce): string
     {
-        return base64_encode(hash_hmac('sha512', $apiKey . $nonce, $apiSecret, true));
+        return base64_encode(hash_hmac('sha512', $apiKey.$nonce, $apiSecret, true));
     }
 }

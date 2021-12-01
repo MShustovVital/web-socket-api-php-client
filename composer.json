@@ -4,8 +4,8 @@
     "description": "Composer package Exmo (Bitcoin Exchange) WebSocket API PHP client",
     "license": "MIT",
     "require": {
-        "php": ">=5.4.2",
-        "ratchet/pawl": "^0.3.4"
+        "php": ">=8.0",
+        "ratchet/pawl": "^0.4.0"
     },
     "autoload": {
         "psr-4": {
